@@ -1,0 +1,969 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "IR_Asg2.ipynb",
+      "provenance": [],
+      "collapsed_sections": [],
+      "toc_visible": true,
+      "authorship_tag": "ABX9TyM08xJkVmJhap85DBdrVt8c",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/anandpol98/Information_Retrieval_TF_IDF/blob/main/Term_Document_Matrix_IRipynb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "9lcBA55TuUfS"
+      },
+      "source": [
+        "# Mounting Google Drive"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "MYKiS7fSuRtN",
+        "outputId": "80c05f5f-51f0-45ed-d7bc-57891aa63bca"
+      },
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')"
+      ],
+      "execution_count": 1,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Mounted at /content/drive\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "kLbjsDqVuYPR"
+      },
+      "source": [
+        "# Unzipping Business Document"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "f59EbYKmw888"
+      },
+      "source": [
+        "!unzip \"/content/drive/MyDrive/business.zip\" -d \"/content/\""
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "vinfoEfzyCbb"
+      },
+      "source": [
+        "# Importing Libraries"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "dPidLeHCxU09",
+        "outputId": "b6e5297a-7b3a-47a2-b278-9be5659ddd2a"
+      },
+      "source": [
+        "import os,re,math\r\n",
+        "import numpy as np\r\n",
+        "import pandas as pd\r\n",
+        "from bs4 import BeautifulSoup\r\n",
+        "import nltk\r\n",
+        "from nltk.tokenize import word_tokenize\r\n",
+        "nltk.download('stopwords')\r\n",
+        "nltk.download('punkt')\r\n",
+        "nltk.download('wordnet')"
+      ],
+      "execution_count": 3,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "[nltk_data] Downloading package stopwords to /root/nltk_data...\n",
+            "[nltk_data]   Unzipping corpora/stopwords.zip.\n",
+            "[nltk_data] Downloading package punkt to /root/nltk_data...\n",
+            "[nltk_data]   Unzipping tokenizers/punkt.zip.\n",
+            "[nltk_data] Downloading package wordnet to /root/nltk_data...\n",
+            "[nltk_data]   Unzipping corpora/wordnet.zip.\n"
+          ],
+          "name": "stdout"
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "True"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 3
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "kGUxNrDpyHce"
+      },
+      "source": [
+        "#Funtions for Preprocessing text"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "azb2MANJudwh"
+      },
+      "source": [
+        "This cell has all functions for preprocessing text\r\n",
+        "\r\n",
+        "*   Remove Punctuations/Numbers\r\n",
+        "*   Tokenization using NLTK library\r\n",
+        "*   Remove Stopwords\r\n",
+        "*   Lemmatization\r\n",
+        "\r\n",
+        "\r\n",
+        "\r\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "EkvpKGWryKB_"
+      },
+      "source": [
+        "\r\n",
+        "# removing Puntuation\r\n",
+        "\r\n",
+        "def remove_punc(data):\r\n",
+        "  return re.sub('[!\\\"#$%&\\'()*+,-./:;<=>?@[\\]^_`{|}~0-9\\n]','',data) \r\n",
+        "\r\n",
+        "\r\n",
+        "# Tokenization using NLTK library\r\n",
+        "\r\n",
+        "def tokenization(data):\r\n",
+        "  return word_tokenize(data)\r\n",
+        "\r\n",
+        "\r\n",
+        "\r\n",
+        "# remove Stopwords\r\n",
+        "\r\n",
+        "def remove_stopwards(tokens):\r\n",
+        "  \r\n",
+        "  from nltk.corpus import stopwords\r\n",
+        "  lst = stopwords.words('english');\r\n",
+        "  count=0\r\n",
+        "  mini=float('inf') \r\n",
+        "  while(count<mini):\r\n",
+        "    for i in tokens:\r\n",
+        "      count = count +1   \r\n",
+        "      if i in lst:\r\n",
+        "        tokens.remove(i) \r\n",
+        "    if count==mini:\r\n",
+        "      break;\r\n",
+        "    else:\r\n",
+        "      mini=count  \r\n",
+        "      count = 0    \r\n",
+        "  return tokens     \r\n",
+        "\r\n",
+        "\r\n",
+        "\r\n",
+        "# Stemming using Lemmatization\r\n",
+        "\r\n",
+        "def lemmatization(tokens):\r\n",
+        "  stem_lemma = []\r\n",
+        "  from nltk.stem import WordNetLemmatizer\r\n",
+        "  lemmatizer = WordNetLemmatizer()\r\n",
+        "  for word in tokens:\r\n",
+        "    stem_lemma.append(lemmatizer.lemmatize(word,pos='v'))\r\n",
+        "  return stem_lemma"
+      ],
+      "execution_count": 4,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "MMNNteYou046"
+      },
+      "source": [
+        "# Removing business_index files from set of documents"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "4ShoC4FDVchy"
+      },
+      "source": [
+        "# Removing Index files\r\n",
+        "\r\n",
+        "files = sorted(os.listdir('/content/business'))\r\n",
+        "lst = re.findall('[0-9]*_business_index.utf8',str(files));\r\n",
+        "for i in lst:\r\n",
+        "  files.remove(i)\r\n",
+        "print(\"File names are as follows : \\n\",files)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "_HR2T3cWy9ox"
+      },
+      "source": [
+        "#Preprocessing all documents individually and storing preprocessed data at respective index as a list of lists.\r\n",
+        "\r\n",
+        "*   Preprocess each document and store the preprocessed data in string form in corpus list item\r\n",
+        "*   After this step, **corpus[i]** contains preprocessed data of **document of index i**.\r\n",
+        "\r\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "n8HZnaAFy9SN"
+      },
+      "source": [
+        "k=0\r\n",
+        "corpus = []\r\n",
+        "for i in sorted(files):\r\n",
+        "\r\n",
+        "   \r\n",
+        "  obj = open('/content/business/' + i)\r\n",
+        "  dat = obj.read()\r\n",
+        "  soup = BeautifulSoup(dat)\r\n",
+        "  dat = soup.find('text').text    # storing file content into dat using BeautifulSoup\r\n",
+        "\r\n",
+        "# remove puntuation\r\n",
+        "  data = remove_punc(dat)\r\n",
+        "\r\n",
+        "# convert text into tokens\r\n",
+        "  tokens = tokenization(data)\r\n",
+        "\r\n",
+        "# converting all tokens into lowercase\r\n",
+        "  tokens = [item.lower() for item in tokens]\r\n",
+        "\r\n",
+        "# removing stopwords from tokens generated\r\n",
+        "  tokens = remove_stopwards(tokens)\r\n",
+        "\r\n",
+        "# Lemmatization to convert original token into it's root form\r\n",
+        "  stem_lemma = lemmatization(tokens)\r\n",
+        "\r\n",
+        "# Combining all terms in its root form into single string\r\n",
+        "  str1 = ' '.join(stem_lemma)\r\n",
+        "\r\n",
+        "# Storing previous step's string at kth index of corpus list\r\n",
+        "  corpus.insert(k,str1)\r\n",
+        "  k = k + 1"
+      ],
+      "execution_count": 6,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "45McdKvejdWC"
+      },
+      "source": [
+        "For e.g corpus[0] has preprocessed data of 1st document which would look like below shown."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 135
+        },
+        "id": "r2BXyC-WKMG4",
+        "outputId": "d1ccb439-8420-4685-da6a-7ad21ce72ffd"
+      },
+      "source": [
+        "corpus[0]"
+      ],
+      "execution_count": 7,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "application/vnd.google.colaboratory.intrinsic+json": {
+              "type": "string"
+            },
+            "text/plain": [
+              "'telegraph calcutta business corporate brief kanoria chemicals industries invest rs crore set mw power plant chemical unit target rs crore turnover thermal power plant would set outlay rs crore chloralkali plant would set cost rs crore chairman manage director r v kanoria say hummingbird ltd lead global provider integrate enterprise content management ecm solutions launch comprehensive content library consolidation solution law firm part enterprise content integration solution solution design help law firm library consolidation efforts minimise time require consolidation ensure complete data integrity availability throughout process canon image technology company draw plan capture per cent rapidly grow market colour laser multifunction devices india market estimate rs crore sierra atlantic lead player offshoring enterprise applications assess fully compliant maturity level five software engineer institute sei capability mature model cmm hikal ltd enter longterm arrangement bayer cropscience ag large crop protection company manufacture supply key agrochemical intermediate hikal set manufacture facility mahad maharashtra manufacture products paltech cool tower amp equipments ltd iso company bag national award quality products small scale sector manage director ceo h p yadav receive award prime minister manmohan singh award function hold recently new delhi domestic resources department back office operations customer relationship management cell industrial development bank india idbi accredit iso certification quality system service loan raise idbi flexibonds idbi omni bond commercial paper certificate deposit corporate deposit slr global entrepolis singapore ges island nations annual mega business network event organise singapore economic development board hold october india strongly represent meet tap business potential advertisement'"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 7
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "6JpX9jqylg1m"
+      },
+      "source": [
+        "# **Using Sklearn**"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "AaVqsBzYC5u3",
+        "outputId": "7fb4a323-a7fd-4155-ce7c-cffe55d90f41"
+      },
+      "source": [
+        "# use standard approach for tf-idf representation\r\n",
+        "\r\n",
+        "from sklearn.feature_extraction.text import TfidfVectorizer \r\n",
+        "tfidf = TfidfVectorizer()               # object creation\r\n",
+        "X = tfidf.fit_transform(corpus)                       # use fit_transform() method of TfidfVectorizer to fit medal on data\r\n",
+        "print(\"Terms after tf-idf matrix process are : \\n\",tfidf.get_feature_names()[:100])      # getting terms obtained after tf-idf formation process\r\n"
+      ],
+      "execution_count": 23,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Terms after tf-idf matrix process are : \n",
+            " ['aa', 'aaa', 'aaaind', 'aaarated', 'aaastable', 'aad', 'aai', 'aaifr', 'aalayance', 'aamir', 'aarohi', 'aaron', 'aarvee', 'aastable', 'aazmao', 'ab', 'aback', 'abacus', 'abandon', 'abani', 'abarrel', 'abate', 'abb', 'abbots', 'abbott', 'abbreviate', 'abbs', 'abc', 'abcs', 'abdomen', 'abdul', 'abdullah', 'abe', 'abel', 'aber', 'aberdeen', 'aberration', 'abeyance', 'abhang', 'abhay', 'abhijit', 'abhiyan', 'abide', 'abilities', 'ability', 'able', 'ablr', 'abn', 'abnormal', 'abolish', 'abolishment', 'abolition', 'abort', 'abovementioned', 'abp', 'abrasive', 'abrasives', 'abreast', 'abroad', 'abroadstanchart', 'abrupt', 'abs', 'absence', 'absences', 'absent', 'absolute', 'absolutely', 'absolve', 'absorb', 'absorbable', 'absorbers', 'absorption', 'absorptive', 'abstain', 'absurd', 'abu', 'abubakir', 'abundant', 'abuse', 'abusive', 'abuy', 'abuzz', 'abysmal', 'abysmally', 'ac', 'academia', 'academic', 'academics', 'academies', 'academy', 'acc', 'accede', 'accelerate', 'acceleration', 'accelerator', 'accent', 'accept', 'acceptability', 'acceptable', 'acceptance']\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "90QRbWpOil0i"
+      },
+      "source": [
+        "# **Shape of Term-Document Matrix formed using Sklearn library**"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Dh-2CdH-io28",
+        "outputId": "862fad0d-d32d-4431-8f72-4548c660b9b3"
+      },
+      "source": [
+        "print(\"Shape of Term-Document Matrix is : \",X.shape)"
+      ],
+      "execution_count": 9,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Shape of Term-Document Matrix is :  (1994, 20044)\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Sbg78FOcitQ0"
+      },
+      "source": [
+        "Converting X into Pandas dataframe"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "qhAKquiREX6X"
+      },
+      "source": [
+        "df_X = pd.DataFrame(data = X.toarray(),index = sorted(files),columns = tfidf.get_feature_names())"
+      ],
+      "execution_count": 10,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "JIAqrkhOEvV8"
+      },
+      "source": [
+        "print(df_X)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "SCSD_qxrF9Cx",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "898f0976-9d8e-4602-85f8-6688a1f52fd8"
+      },
+      "source": [
+        "top_5_doc = sorted(files)[:5]\r\n",
+        "top_5_doc"
+      ],
+      "execution_count": 12,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "['1040901_business_story_3700171.utf8',\n",
+              " '1040901_business_story_3700827.utf8',\n",
+              " '1040901_business_story_3701515.utf8',\n",
+              " '1040901_business_story_3701518.utf8',\n",
+              " '1040901_business_story_3701887.utf8']"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 12
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "pY6WBHsjHWqf",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "a1c15f6b-f6d5-44dd-dd2b-7640c9d9d6be"
+      },
+      "source": [
+        "type(df_X.sort_index()[:5])"
+      ],
+      "execution_count": 13,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "pandas.core.frame.DataFrame"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 13
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "IEf81em3hgbk"
+      },
+      "source": [
+        "#**Q4 - First 5 documents TOP 5 terms and their tf-idf scores obtained using Sklearn library**"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "wCXRq9m95c2B",
+        "outputId": "b9c6e3c9-c923-481c-e07f-3bebe671d981"
+      },
+      "source": [
+        "for i in range(5):\r\n",
+        "  print(str(i+1) + \" document's top 5 words and their tf-idf score are as follows\\n\")\r\n",
+        "  print(\"\\nWords  |  Tf-idf Scores\\n\")\r\n",
+        "  print((df_X.loc[top_5_doc[i]]).sort_values(ascending = False)[:5],\"\\n\\n\")"
+      ],
+      "execution_count": 14,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "1 document's top 5 words and their tf-idf score are as follows\n",
+            "\n",
+            "\n",
+            "Words  |  Tf-idf Scores\n",
+            "\n",
+            "consolidation    0.181328\n",
+            "content          0.178707\n",
+            "kanoria          0.178479\n",
+            "idbi             0.176259\n",
+            "hikal            0.172957\n",
+            "Name: 1040901_business_story_3700171.utf8, dtype: float64 \n",
+            "\n",
+            "\n",
+            "2 document's top 5 words and their tf-idf score are as follows\n",
+            "\n",
+            "\n",
+            "Words  |  Tf-idf Scores\n",
+            "\n",
+            "policy         0.292382\n",
+            "export         0.229180\n",
+            "trade          0.216347\n",
+            "maidan         0.184744\n",
+            "entitlement    0.143509\n",
+            "Name: 1040901_business_story_3700827.utf8, dtype: float64 \n",
+            "\n",
+            "\n",
+            "3 document's top 5 words and their tf-idf score are as follows\n",
+            "\n",
+            "\n",
+            "Words  |  Tf-idf Scores\n",
+            "\n",
+            "patni     0.448705\n",
+            "centre    0.312209\n",
+            "anna      0.208451\n",
+            "salai     0.208451\n",
+            "patnis    0.197759\n",
+            "Name: 1040901_business_story_3701515.utf8, dtype: float64 \n",
+            "\n",
+            "\n",
+            "4 document's top 5 words and their tf-idf score are as follows\n",
+            "\n",
+            "\n",
+            "Words  |  Tf-idf Scores\n",
+            "\n",
+            "bharat        0.437181\n",
+            "petro         0.347059\n",
+            "kochi         0.233013\n",
+            "refineries    0.215340\n",
+            "behuria       0.211498\n",
+            "Name: 1040901_business_story_3701518.utf8, dtype: float64 \n",
+            "\n",
+            "\n",
+            "5 document's top 5 words and their tf-idf score are as follows\n",
+            "\n",
+            "\n",
+            "Words  |  Tf-idf Scores\n",
+            "\n",
+            "uti      0.481050\n",
+            "mip      0.263727\n",
+            "hdfc     0.233236\n",
+            "plus     0.209197\n",
+            "icici    0.194054\n",
+            "Name: 1040901_business_story_3701887.utf8, dtype: float64 \n",
+            "\n",
+            "\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "VHHtHzoNzAKx"
+      },
+      "source": [
+        "\r\n",
+        "\r\n",
+        "---\r\n",
+        "\r\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "d9fGHaGLllSN"
+      },
+      "source": [
+        "# **Using Tf-Idf classic manual approach**"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "poKcqikmht7z"
+      },
+      "source": [
+        "**Class Definition and its functions**"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Qn7ngH54rcS7"
+      },
+      "source": [
+        "class tf_idf_matrix:\r\n",
+        "  \r\n",
+        "  # Constructor - intialize members of class\r\n",
+        "\r\n",
+        "  def __init__(self,corpus,files):\r\n",
+        "    self.corpus = corpus            # corpus data\r\n",
+        "    self.set_tokens = set()         # will be filled with unique terms includinf all documents in corpus\r\n",
+        "\r\n",
+        "    for i in self.corpus:\r\n",
+        "      self.set_tokens.update(i.split())         # storing unique terms - tokens in \"set_tokens\" member of class\r\n",
+        "\r\n",
+        "    self.files = files  # storing file names \r\n",
+        "    self.tf = np.zeros((len(self.corpus),len(self.set_tokens)))             # \"tf\" is term frequency matrix\r\n",
+        "    self.tf_idf =  np.zeros((len(self.corpus),len(self.set_tokens)))        # \"tf_idf\" is term-document\" matrix\r\n",
+        "    self.idf_t =  np.zeros(len(self.set_tokens))                             # \"idf_t\" stores inverse document frequency for each term\r\n",
+        "  \r\n",
+        "  def transform(self,doc_no):\r\n",
+        "    return obj.tf_idf[sorted(self.files).index(doc_no)][:]  # return document tf_idf vector having scores for all terms\r\n",
+        "    \r\n",
+        "\r\n",
+        "    \r\n",
+        "  def fit(self):\r\n",
+        "\r\n",
+        "    # defining some local variables\r\n",
+        "\r\n",
+        "    tf =  np.zeros((len(self.corpus),len(self.set_tokens)))\r\n",
+        "    corpus = self.corpus\r\n",
+        "    set_tokens = self.set_tokens\r\n",
+        "    lst = list(set_tokens)\r\n",
+        "\r\n",
+        "\r\n",
+        "    #tf matrix calculation\r\n",
+        "\r\n",
+        "    for i in range(len(corpus)):\r\n",
+        "      for j in range(len(lst)):\r\n",
+        "          tf[i][j] = (corpus[i]).count(lst[j])\r\n",
+        "\r\n",
+        "      tf[i][:] = np.divide((tf[i][:]),len(corpus[i]))\r\n",
+        "\r\n",
+        "    \r\n",
+        "\r\n",
+        "    #idf_t vector calculation\r\n",
+        "\r\n",
+        "    df_t =  np.zeros(len(lst))  # document freq for each term\r\n",
+        "    idf_t =  np.zeros(len(lst)) # store inverse document frequency for each term\r\n",
+        "\r\n",
+        "    for i in range(len(lst)):\r\n",
+        "      for j in range(len(corpus)):\r\n",
+        "        if lst[i] in corpus[j]:\r\n",
+        "          df_t[i] = df_t[i] +  1\r\n",
+        "\r\n",
+        "      idf_t[i] = math.log(len(corpus)/df_t[i])\r\n",
+        "\r\n",
+        "\r\n",
+        "\r\n",
+        "    #tf_idf matrix computation\r\n",
+        "\r\n",
+        "    tf_idf = np.zeros((len(corpus),len(lst))) \r\n",
+        "\r\n",
+        "    for i in range(len(corpus)):\r\n",
+        "      tf_idf[i][:] = [a*b for a,b in zip(tf[i][:],idf_t[:])]\r\n",
+        "\r\n",
+        "\r\n",
+        "    # storing values into member variables\r\n",
+        "\r\n",
+        "    self.tf_idf = tf_idf     \r\n",
+        "    self.idf_t = idf_t\r\n",
+        "    self.tf = tf\r\n"
+      ],
+      "execution_count": 15,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "sJmoINuxh3-w"
+      },
+      "source": [
+        "Creating object of class"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "hUnU8Y213IqN"
+      },
+      "source": [
+        "obj = tf_idf_matrix(corpus,files)   #class object creation"
+      ],
+      "execution_count": 16,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "LSi_8-C4h8PA"
+      },
+      "source": [
+        "**Calling Fit method**"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "HB2W9VbgcwW8"
+      },
+      "source": [
+        "obj.fit()   # fitting the data for tf-idf matrix formation"
+      ],
+      "execution_count": 17,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "iYFzieCNTZOm",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "27b8f6ca-3f35-4160-e679-30acaa080646"
+      },
+      "source": [
+        "obj.idf_t   # printing idf_t vector"
+      ],
+      "execution_count": 18,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array([1.16817847, 6.90475077, 6.90475077, ..., 0.68714716, 7.59789795,\n",
+              "       7.59789795])"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 18
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ZVv0EllR2oxD"
+      },
+      "source": [
+        "**Calling Transform Method for Document \"*1040901_business_story_3700171.utf8*\"**"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "zMYqx5542ntp",
+        "outputId": "16aad825-f533-4a6c-dd87-2fb37d29e92a"
+      },
+      "source": [
+        "print(\"Term-document vector for particular doc no:\\n\",obj.transform(\"1040901_business_story_3700171.utf8\"))"
+      ],
+      "execution_count": 19,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Term-document vector for particular doc no:\n",
+            " [0.00188112 0.         0.         ... 0.00073768 0.         0.        ]\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "cellView": "form",
+        "id": "t88tUG3a7CTa"
+      },
+      "source": [
+        "#@title\n",
+        "#p = sorted(obj.transform(\"1040901_business_story_3700171.utf8\"),reverse = True)\n",
+        "#t = np.argsort(p)\n",
+        "#=0\n",
+        "#for i in t:\n",
+        "#  print(list(obj.set_tokens)[i],\"--\",p[j])\n",
+        "#  j += 1"
+      ],
+      "execution_count": 20,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "fmZgDA0ziWIR"
+      },
+      "source": [
+        "# **Shape of Term-Document Matrix formed using Classic Manual approach**"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "HGBeTQUcFV-0",
+        "outputId": "5105ad79-b827-4a76-d099-ccd5ee8e64f3"
+      },
+      "source": [
+        "print(\"Shape of Term-Document Matrix formed is : \", np.shape(obj.tf_idf))"
+      ],
+      "execution_count": 21,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Shape of Term-Document Matrix formed is :  (1994, 20062)\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "PebEPMzhi6Gr"
+      },
+      "source": [
+        "# **Q4 - First 5 documents TOP 5 terms and their tf-idf scores obtained using classic manual approach**"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "cff8t6P9lcJg",
+        "outputId": "28c47dee-5f3e-473c-b17f-bdba2b2ad708"
+      },
+      "source": [
+        "for i in range(5):\r\n",
+        "    top_5 = np.argsort(obj.tf_idf[i][:])[-5:]\r\n",
+        "    print(str(i+1) + \" document's top 5 words and their tf-idf score are as follows\\n\")\r\n",
+        "    print(sorted(obj.tf_idf[i][:], reverse= True)[:5])\r\n",
+        "    print(\"\\nWords    |     Tf-idf Scores\\n\")\r\n",
+        "    print(list(obj.set_tokens)[top_5[4]],\"------\",obj.tf_idf[i][top_5[4]])\r\n",
+        "    print(list(obj.set_tokens)[top_5[3]],\"------\",obj.tf_idf[i][top_5[3]])\r\n",
+        "    print(list(obj.set_tokens)[top_5[2]],\"------\",obj.tf_idf[i][top_5[2]])\r\n",
+        "    print(list(obj.set_tokens)[top_5[1]],\"------\",obj.tf_idf[i][top_5[1]])\r\n",
+        "    print(list(obj.set_tokens)[top_5[0]],\"------\",obj.tf_idf[i][top_5[0]])\r\n",
+        "    print(\"\\n\")"
+      ],
+      "execution_count": 22,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "1 document's top 5 words and their tf-idf score are as follows\n",
+            "\n",
+            "[0.006977225616590095, 0.006668388179712177, 0.006428835252912167, 0.006254953114037803, 0.005967918924977709]\n",
+            "\n",
+            "Words    |     Tf-idf Scores\n",
+            "\n",
+            "kanoria ------ 0.006977225616590095\n",
+            "hikal ------ 0.006668388179712177\n",
+            "library ------ 0.006428835252912167\n",
+            "consolidation ------ 0.006254953114037803\n",
+            "idbi ------ 0.005967918924977709\n",
+            "\n",
+            "\n",
+            "2 document's top 5 words and their tf-idf score are as follows\n",
+            "\n",
+            "[0.007921357912634848, 0.007793657170012391, 0.007325242948823728, 0.006699305404232055, 0.006699305404232055]\n",
+            "\n",
+            "Words    |     Tf-idf Scores\n",
+            "\n",
+            "export ------ 0.007921357912634848\n",
+            "policy ------ 0.007793657170012391\n",
+            "expo ------ 0.007325242948823728\n",
+            "pragati ------ 0.006699305404232055\n",
+            "maidan ------ 0.006699305404232055\n",
+            "\n",
+            "\n",
+            "3 document's top 5 words and their tf-idf score are as follows\n",
+            "\n",
+            "[0.02930278973976647, 0.011241088463507297, 0.010955873036080437, 0.009956381787976695, 0.00851457040041009]\n",
+            "\n",
+            "Words    |     Tf-idf Scores\n",
+            "\n",
+            "patni ------ 0.02930278973976647\n",
+            "centre ------ 0.011241088463507297\n",
+            "salai ------ 0.010955873036080437\n",
+            "patnis ------ 0.009956381787976695\n",
+            "pat ------ 0.00851457040041009\n",
+            "\n",
+            "\n",
+            "4 document's top 5 words and their tf-idf score are as follows\n",
+            "\n",
+            "[0.016026472151508556, 0.012613848931302617, 0.012425421516717168, 0.010716509877836133, 0.009364986372211552]\n",
+            "\n",
+            "Words    |     Tf-idf Scores\n",
+            "\n",
+            "bharat ------ 0.016026472151508556\n",
+            "behuria ------ 0.012613848931302617\n",
+            "petro ------ 0.012425421516717168\n",
+            "refine ------ 0.010716509877836133\n",
+            "kochi ------ 0.009364986372211552\n",
+            "\n",
+            "\n",
+            "5 document's top 5 words and their tf-idf score are as follows\n",
+            "\n",
+            "[0.01487278288994239, 0.010077653977387992, 0.009473888247617095, 0.008675685541066885, 0.008220870786912653]\n",
+            "\n",
+            "Words    |     Tf-idf Scores\n",
+            "\n",
+            "mip ------ 0.01487278288994239\n",
+            "hdfc ------ 0.010077653977387992\n",
+            "pru ------ 0.009473888247617095\n",
+            "prud ------ 0.008675685541066885\n",
+            "icici ------ 0.008220870786912653\n",
+            "\n",
+            "\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    }
+  ]
+}
